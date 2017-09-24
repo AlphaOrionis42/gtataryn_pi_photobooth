@@ -2,29 +2,39 @@ import time
 import pygame
 import sys
 from pygame.locals import *
-img = pygame.image.load('/home/pi/gregtataryn_photobooth/app_images/pose.png')
 
+# Init variables
+#img = pygame.image.load('/home/pi/gtataryn_pi_photobooth/slides/intro.png')
+running = True
+
+# Init pygame
 pygame.init()
-pygame.display.init()
-w = 800
-h = 480
-screen = pygame.display.set_mode((w, h), pygame.FULLSCREEN)
+pygame.display.set_mode((800,480))
+screen = pygame.display.get_surface()
 pygame.mouse.set_visible(False)
 #pygame.display.toggle_fullscreen()
-#white = (255, 64, 64)
 
-#screen.fill((white))
-running = 1
-loop = 1
+def show_img(img_path):
+    screen.fill( (0,0,0) )
 
-while running:
-    print(loop)
-    loop = loop + 1
-    for event in pygame.event.get():
-        if (event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE)):
+    img = pygame.image.load(img_path)
+    img = img.convert()
+
+    screen.blit(img, (0,0))
+    pygame.display.flip()
+
+def chk_input(events):
+    for event in events:
+        if event.type == KEYDOWN and event.key == K_ESCAPE:
             pygame.quit()
             sys.exit()
-        
-    #screen.fill((white))
-    screen.blit(img,(0,0))
-    pygame.display.flip()
+
+show_img('/home/pi/gtataryn_pi_photobooth/slides/intro.png')
+
+while running:
+    print("Running? " + str(running))
+    chk_input(pygame.event.get())
+    #for event in pygame.event.get():
+    #    if (event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE)):
+    #        pygame.quit()
+    #        sys.exit()
