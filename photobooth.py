@@ -18,6 +18,7 @@ debug = True
 
 # Run variable for main program
 run = True
+run_show = True
 
 #######################
 # GPIO Initialization #
@@ -56,40 +57,12 @@ def chk_input(events):
             pygame.quit()
             sys.exit()
         elif event.type == MOUSEBUTTONDOWN:
-            print("Mouse button pressed")
+            print("Mouse button")
             return True
-
-####################################################
-# Function to overlay images to the camera preview #
-####################################################
-def overlay_img(imgPath, cam):
-    img = Image.open(imgPath)
-    oLay = cam.add_overlay(img.tobytes(), size=img.size)
-    oLay.alpha = 100
-    oLay.layer = 3
-    return oLay
-
-def set_img_dimension(img_w, img_h):
-    global transform_y, transformx, offset_y, offset_x
-
-    ratio_h = (config.monitor_w * img_h) / img_w
-
-    if (ratio_h < config.monitor_h):
-        transform_y = ratio_h
-        transform_x = config.monitor_w
-        offset_y = (config.monitor_h - ratio_h) / 2
-        offset_x = 0
-    elif (ratio_h > config.monitor_h):
-        transform_x = (config.monitor_h * img_w) / img_h
-        transform_y = config.monitor_h
-        offset_x = (config.monitor_w - transform_x) / 2
-        offset_y = 0
-    else:
-        transform_x = config.monitor_w
-        transform_y = config.monitor_h
-        offset_y = offset_x = 0
-
-def show_slide(img_path, offset_x, offset_y):
+#############################################
+# Function to display an image using pygame #
+#############################################
+def show_img(img_path, offset_x, offset_y):
     screen.fill( (0,0,0) )
 
     img = pygame.image.load(img_path)
@@ -129,45 +102,47 @@ def resize_imgs(jpg_group):
 ###################################################
 # Function to display the preview images to users #
 ###################################################
-def display_imgs(jpg_group):
+def img_replay(jpg_group):
     for i in range(0, config.replay_count):
         for j in range(1,config.num_shots+1):
             print("Loop: " + str(i) + " Photo: " + str(j))
-            show_slide(jpg_group + "_" + str(j) + "_sm.jpg", 80, 0)
+            show_img(jpg_group + "_" + str(j) + "_sm.jpg", 80, 0)
             sleep(config.replay_wait)
 
 ##############################################
 # Function to run slide show of photos taken #
 ##############################################
-def slide_show():
+def run_slide_show():
     file_list = os.listdir(config.save_path)
     num_files = len(file_list)
     slide_count = 0
-    while True:
+    run_show = True
+    while run_show:
         if chk_input(pygame.event.get()):
-            print("Mous pressed, going back to main")
+            run_show = False
             break
         if num_files >= 3:
             for file in file_list:
                 if chk_input(pygame.event.get()):
-                    print("Mouse pressed, going back to while true")
+                    run_show = False
                     break
                 if fnmatch.fnmatch(file, '*sm.jpg'):
-                    show_slide(config.save_path + file, 0, 0)
+                    show_img(config.save_path + file, 0, 0)
                     sleep(config.replay_wait)
                     slide_count += 1
 
                 if num_files < 6 and slide_count == num_files:
-                    show_slide(config.slide_path + 'start.png', 0, 0)
+                    show_img(config.slide_path + 'start.png', 0, 0)
                     sleep(config.prep_delay)
                     slide_count = 0
                 elif slide_count == 6:
-                    show_slide(config.slide_path + 'start.png', 0, 0)
+                    show_img(config.slide_path + 'start.png', 0, 0)
                     sleep(config.prep_delay)
                     slide_count = 0
         else:
+            run_show= False
             break
-    return
+    show_img(config.slide_path + 'intro.png', 0, 0)
                     
 
 #############################
@@ -238,13 +213,13 @@ def run_booth():
         camera.stop_preview()
         camera.close()
 
-    show_slide(config.slide_path + "wait.png", 0, 0)
+    show_img(config.slide_path + "wait.png", 0, 0)
     resize_imgs(config.save_path + "photobooth_" + now)
     make_gif(config.save_path + "photobooth_" + now, now)
     clear_screen()
-    display_imgs(config.save_path + "photobooth_" + now)
+    img_replay(config.save_path + "photobooth_" + now)
     clear_screen()    
-    show_slide(config.slide_path + 'intro.png', 0, 0)
+    show_img(config.slide_path + 'intro.png', 0, 0)
 
 # Function that runs on startup to blink the LED.
 def Startup():
@@ -255,6 +230,14 @@ def Startup():
         time.sleep(0.25)
     GPIO.output(config.redLed, True)
 
+def wait_for_button(wait_time):
+    display_timer = time.time() + wait_time
+    while time.time() <= display_timer:
+        chk_input(pygame.event.get())
+        if GPIO.input(config.btnPin):
+            sleep(config.debounce)
+            run_booth()
+
 ################
 # Main Program #
 ################
@@ -262,19 +245,15 @@ try:
     # Run startup to blink the green light.
     Startup()
     time.sleep(.25)
-    show_slide(config.slide_path + 'intro.png', 0, 0)
+    show_img(config.slide_path + 'intro.png', 0, 0)
     sleep(config.prep_delay)
     while run:
         GPIO.output(config.redLed, False)
         GPIO.output(config.greenLed, True)
         chk_input(pygame.event.get())
-        #print("Green LED on")
-        slide_show()
-        if GPIO.input(config.btnPin):
-            time.sleep(config.debounce)
-            if debug:
-                print("Button pressed")
-            run_booth()
+        wait_for_button(5)
+        chk_input(pygame.event.get())
+        run_slide_show()
 except KeyboardInterrupt:
     print("Keyboard interrupt")
     GPIO.output(config.greenLed, False)
