@@ -152,7 +152,7 @@ def run_slide_show():
                     run_show = False
                     break
                 if fnmatch.fnmatch(file_list[i], '*sm.jpg'):
-                    show_img(config.save_path + file_list[i], 0, 0)
+                    show_img(config.save_path + file_list[i], 80, 0)
                     sleep(config.replay_wait)
                     slide_count += 1
                     last_img = i
@@ -238,6 +238,7 @@ def run_booth():
     finally:
         camera.stop_preview()
         camera.close()
+        
     print("Wait for resize")
     show_img(config.slide_path + "wait.png", 0, 0)
     resize_imgs(config.save_path + "photobooth_" + now)
@@ -245,6 +246,8 @@ def run_booth():
     make_gif(config.save_path + "photobooth_" + now, now)
     clear_screen()
     img_replay(config.save_path + "photobooth_" + now)
+    GPIO.output(config.redLed, False)
+    GPIO.output(config.greenLed, True)
     clear_screen()    
     show_img(config.slide_path + 'intro.png', 0, 0)
 
@@ -277,7 +280,7 @@ def wait_for_button(wait_time):
         chk_input(pygame.event.get())
     # If the button was pressed, wait for another press before proceeding on
     if btn_pressed:
-        wait_for_button(5)
+        wait_for_button(config.btn_wait)
 
 ################
 # Main Program #
@@ -293,7 +296,7 @@ try:
         GPIO.output(config.greenLed, True)
         # Check for input to exit, then wait for the button press.
         chk_input(pygame.event.get())
-        wait_for_button(5)
+        wait_for_button(config.btn_wait)
         # Check again for input to exit and begin the slide show.
         chk_input(pygame.event.get())
         run_slide_show()
