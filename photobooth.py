@@ -190,6 +190,7 @@ def run_booth():
         #camera.preview_fullscreen = True
         clear_screen()
         for i in range(1,config.num_shots+1):
+            chk_input(pygame.event.get())
             GPIO.output(config.redLed, False)
             camera.hflip = True
             camera.resolution = (config.monitor_w, config.monitor_h)
