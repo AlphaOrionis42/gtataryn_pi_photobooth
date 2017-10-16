@@ -299,6 +299,12 @@ def Startup():
         time.sleep(0.25)
     GPIO.output(config.redLed, True)
 
+def wait_for_input(wait_time):
+    timer = time.time() + wait_time
+
+    while time.time() <= timer:
+        chk_input(pygame.event.get())
+
 ###################################################
 # Function to handle waiting for the button press #
 # Taks in a wait_time in seconds for how long it  #
