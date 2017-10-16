@@ -321,7 +321,7 @@ def wait_for_button(wait_time):
 ################
 # Main Program #
 ################
-try:
+def main():
     # Run startup to blink the green light.
     Startup()
     time.sleep(0.5)
@@ -337,6 +337,12 @@ try:
         # Check again for input to exit and begin the slide show.
         chk_input(pygame.event.get())
         run_slide_show()
+
+####################
+# Try Running Main #
+####################
+try:
+    main()
 except KeyboardInterrupt:
     print("Keyboard interrupt")
     GPIO.output(config.greenLed, False)
