@@ -20,6 +20,7 @@ num_shots = 3 # How many shots to take
 
 # Other constants
 gif_delay = 100 # Delay between shots for GIF in miliseconds
+alpha_vel = 5 # The speed at which the alpha changes to fade in images
 
 # Replay variables
 replay_count = 2 # Number of loops through the photo set

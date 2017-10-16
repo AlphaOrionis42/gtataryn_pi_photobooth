@@ -37,8 +37,10 @@ GPIO.output(config.whiteLed, False)
 pygame.init()
 pygame.display.set_mode((config.monitor_w, config.monitor_h))
 screen = pygame.display.get_surface()
+background = pygame.Surface((config.monitor_w, config.monitor_h))
+background.fill((0,0,0))
 pygame.mouse.set_visible(False)
-pygame.display.toggle_fullscreen()
+#pygame.display.toggle_fullscreen()
 
 ################################################
 # Function to clear the slides from the screen #
@@ -87,24 +89,27 @@ def show_img(img_path, offset_x, offset_y):
     screen.blit(img, (offset_x, offset_y))
     pygame.display.flip()
 
+#############################################
+# Function to fade in an image using pygame #
+#############################################
 def fade_img(img_path, offset_x, offset_y):
-    DONE = False
-    clear_screen()
-
+    done = False
+    alpha = 0
     img = pygame.image.load(img_path)
+    #clear_screen()
+    while not done:
+        for event in pygame.event.get():
+            if (event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE)):
+                done = True
 
-    img_surface = pygame.Surface((img.get_size()))
-    img_surface.set_alpha(0)
-    alph = 0
-    img_surface.blit(img,(offset_x,offset_y))
+        #background.fill((0,0,0))
+        img.set_alpha(alpha)
+        screen.blit(img, (offset_x, offset_y))
+        pygame.display.flip()
+        alpha += config.alpha_vel
 
-    while not DONE:
-        alph += 5
-        img_surface.set_alpha(alph)
-        screen.blit(img_surface, (offset_x, offset_y))
-
-        if alph == 100:
-            DONE = True
+        if alpha >= 255:
+            done = True
 
 
 ###############################################
@@ -137,10 +142,11 @@ def resize_imgs(jpg_group):
 # Function to display the preview images to users #
 ###################################################
 def img_replay(jpg_group):
+    clear_screen()
     for i in range(0, config.replay_count):
         for j in range(1,config.num_shots+1):
             print("Loop: " + str(i) + " Photo: " + str(j))
-            show_img(jpg_group + "_" + str(j) + "_sm.jpg", 80, 0)
+            fade_img(jpg_group + "_" + str(j) + "_sm.jpg", 80, 0)
             sleep(config.replay_wait)
 
 ###################################################
@@ -160,6 +166,7 @@ def run_slide_show():
             run_show = False
             break
         if num_files >= 3:
+            clear_screen()
             if last_img > num_files:
                 if debug:
                     print("Last image higher than number of files")
@@ -175,18 +182,20 @@ def run_slide_show():
                     run_show = False
                     break
                 if fnmatch.fnmatch(file_list[i], '*sm.jpg'):
-                    show_img(config.save_path + file_list[i], 80, 0)
+                    fade_img(config.save_path + file_list[i], 80, 0)
                     sleep(config.replay_wait)
                     slide_count += 1
                     last_img = i
 
                 if num_files < 6 and slide_count == num_files:
-                    show_img(config.slide_path + 'start.png', 0, 0)
+                    fade_img(config.slide_path + 'start.png', 0, 0)
                     sleep(config.replay_wait)
+                    clear_screen()
                     slide_count = 0
                 elif slide_count == 6:
-                    show_img(config.slide_path + 'start.png', 0, 0)
+                    fade_img(config.slide_path + 'start.png', 0, 0)
                     sleep(config.replay_wait)
+                    clear_screen()
                     slide_count = 0
         else:
             run_show = False
