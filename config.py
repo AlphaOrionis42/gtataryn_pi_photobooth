@@ -11,6 +11,7 @@ photo_h = 1232
 btnPin = 11
 greenLed = 13
 redLed = 15
+whiteLed = 12
 debounce = 0.25 # Time to wait on a button press to avoid multiple inputs on single press
 
 # Camera config
@@ -22,7 +23,7 @@ gif_delay = 100 # Delay between shots for GIF in miliseconds
 
 # Replay variables
 replay_count = 2 # Number of loops through the photo set
-replay_wait = 1 # Delay to show each photo in seconds
+replay_wait = 4 # Delay to show each photo in seconds
 
 # File path variables
 save_path = '/media/pi/P/pics/' # Path to save the photos

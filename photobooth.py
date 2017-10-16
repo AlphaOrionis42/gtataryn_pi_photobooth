@@ -26,8 +26,10 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setup(config.btnPin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 GPIO.setup(config.greenLed, GPIO.OUT)
 GPIO.setup(config.redLed, GPIO.OUT)
+GPIO.setup(config.whiteLed, GPIO.OUT)
 GPIO.output(config.greenLed, False)
 GPIO.output(config.redLed, False)
+GPIO.output(config.whiteLed, False)
 
 #########################
 # Pygame Initialization #
@@ -85,6 +87,26 @@ def show_img(img_path, offset_x, offset_y):
     screen.blit(img, (offset_x, offset_y))
     pygame.display.flip()
 
+def fade_img(img_path, offset_x, offset_y):
+    DONE = False
+    clear_screen()
+
+    img = pygame.image.load(img_path)
+
+    img_surface = pygame.Surface((img.get_size()))
+    img_surface.set_alpha(0)
+    alph = 0
+    img_surface.blit(img,(offset_x,offset_y))
+
+    while not DONE:
+        alph += 5
+        img_surface.set_alpha(alph)
+        screen.blit(img_surface, (offset_x, offset_y))
+
+        if alph == 100:
+            DONE = True
+
+
 ###############################################
 # Function to make animated GIF of the photos #
 ###############################################
@@ -128,6 +150,7 @@ def run_slide_show():
     file_list = os.listdir(config.save_path)
     num_files = len(file_list)
     slide_count = 0
+    GPIO.output(config.whiteLed, False)
     global last_img
     if debug:
         print(str(last_img))
@@ -159,15 +182,16 @@ def run_slide_show():
 
                 if num_files < 6 and slide_count == num_files:
                     show_img(config.slide_path + 'start.png', 0, 0)
-                    sleep(config.prep_delay)
+                    sleep(config.replay_wait)
                     slide_count = 0
                 elif slide_count == 6:
                     show_img(config.slide_path + 'start.png', 0, 0)
-                    sleep(config.prep_delay)
+                    sleep(config.replay_wait)
                     slide_count = 0
         else:
             run_show = False
             break
+    GPIO.output(config.whiteLed, True)
     show_img(config.slide_path + 'intro.png', 0, 0)
                     
 
@@ -177,7 +201,7 @@ def run_slide_show():
 def run_booth():
     if debug:
         print("Running photobooth")
-    GPIO.output(config.greenLed, False)
+    GPIO.output(config.whiteLed, False)
     now = time.strftime("%Y%m%d%H%M%S")
     if debug:
         print(now)
@@ -192,6 +216,7 @@ def run_booth():
         for i in range(1,config.num_shots+1):
             chk_input(pygame.event.get())
             GPIO.output(config.redLed, False)
+            GPIO.output(config.greenLed, False)
             camera.hflip = True
             camera.resolution = (config.monitor_w, config.monitor_h)
             camera.start_preview()
@@ -249,6 +274,7 @@ def run_booth():
     img_replay(config.save_path + "photobooth_" + now)
     GPIO.output(config.redLed, False)
     GPIO.output(config.greenLed, True)
+    GPIO.output(config.whiteLed, True)
     clear_screen()    
     show_img(config.slide_path + 'intro.png', 0, 0)
 
@@ -295,6 +321,7 @@ try:
         # Turn off the red LED and turn on the green LED.
         GPIO.output(config.redLed, False)
         GPIO.output(config.greenLed, True)
+        GPIO.output(config.whiteLed, True)
         # Check for input to exit, then wait for the button press.
         chk_input(pygame.event.get())
         wait_for_button(config.btn_wait)
