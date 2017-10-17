@@ -20,11 +20,12 @@ num_shots = 3 # How many shots to take
 
 # Other constants
 gif_delay = 100 # Delay between shots for GIF in miliseconds
-alpha_vel = 5 # The speed at which the alpha changes to fade in images
 
 # Replay variables
 replay_count = 2 # Number of loops through the photo set
-replay_wait = 4 # Delay to show each photo in seconds
+slide_wait = 3
+replay_wait = 2 # Delay to show each photo in seconds
+alpha_vel = 5 # The speed at which the alpha changes to fade in images
 
 # File path variables
 save_path = '/media/pi/P/pics/' # Path to save the photos
