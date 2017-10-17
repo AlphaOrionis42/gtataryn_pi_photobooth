@@ -14,7 +14,7 @@ from time import sleep
 from PIL import Image
 
 # Local variables
-debug = False #Debug toggle
+debug = False # Debug toggle
 run = True #Run variable for main program
 run_show = True # Run variable for the slide show
 last_img = 0 # Used inside the slide show to track the last photo shown
@@ -55,17 +55,20 @@ def clear_screen():
 # Use the escape key to exit                     #
 ##################################################
 def chk_input(events):
+    global run
+    global run_show
     for event in events:
         # If the input received was an escape key, then exit the program.
         if (event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE)):
             run = False
+            run_show = False
             pygame.quit()
             sys.exit()
         # If the input was a mouse button press, return true
         # used for ending the slide show when users tap the touch screen.
         elif event.type == MOUSEBUTTONDOWN:
             print("Mouse button")
-            return True
+            run_show = False
 
 ####################################################
 # Function to overlay images to the camera preview #
@@ -94,13 +97,17 @@ def show_img(img_path, offset_x, offset_y):
 #############################################
 def fade_img(img_path, offset_x, offset_y):
     done = False
+    global run_show
     alpha = 0
     img = pygame.image.load(img_path)
     #clear_screen()
+    print('begin fade image')
     while not done:
-        for event in pygame.event.get():
-            if (event.type == QUIT or (event.type == KEYDOWN and event.key == K_ESCAPE)):
-                done = True
+        chk_input(pygame.event.get())
+        if not run_show:
+            done = True
+            print('end fade image')
+            return
 
         #background.fill((0,0,0))
         img.set_alpha(alpha)
@@ -109,6 +116,7 @@ def fade_img(img_path, offset_x, offset_y):
         alpha += config.alpha_vel
 
         if alpha >= 255:
+            print('end fade image')
             done = True
 
 
@@ -157,13 +165,14 @@ def run_slide_show():
     num_files = len(file_list)
     slide_count = 0
     GPIO.output(config.whiteLed, False)
+    global run_show
     global last_img
     if debug:
         print(str(last_img))
     run_show = True
     while run_show:
-        if chk_input(pygame.event.get()):
-            run_show = False
+        chk_input(pygame.event.get())
+        if not run_show:
             break
         if num_files >= 3:
             clear_screen()
@@ -178,23 +187,30 @@ def run_slide_show():
                 if debug:
                     print("i = " + str(i))
                     print("last_img = " + str(last_img))
-                if chk_input(pygame.event.get()):
-                    run_show = False
+                chk_input(pygame.event.get())
+                if not run_show:
                     break
                 if fnmatch.fnmatch(file_list[i], '*sm.jpg'):
                     fade_img(config.save_path + file_list[i], 80, 0)
-                    sleep(config.replay_wait)
+                    wait_for_input(config.replay_wait, 'mouse')
+                    print('Done waiting. Run_show = ' + str(run_show))
+                    if not run_show:
+                        break
                     slide_count += 1
                     last_img = i
 
                 if num_files < 6 and slide_count == num_files:
                     fade_img(config.slide_path + 'start.png', 0, 0)
-                    sleep(config.replay_wait)
+                    wait_for_input(config.replay_wait, 'mouse')
+                    if not run_show:
+                        break
                     clear_screen()
                     slide_count = 0
                 elif slide_count == 6:
                     fade_img(config.slide_path + 'start.png', 0, 0)
-                    sleep(config.replay_wait)
+                    wait_for_input(config.replay_wait, 'mouse')
+                    if not run_show:
+                        break
                     clear_screen()
                     slide_count = 0
         else:
@@ -299,11 +315,29 @@ def Startup():
         time.sleep(0.25)
     GPIO.output(config.redLed, True)
 
-def wait_for_input(wait_time):
+def wait_for_input(wait_time, input_type):
     timer = time.time() + wait_time
-
-    while time.time() <= timer:
-        chk_input(pygame.event.get())
+    btn_pressed = False
+    print('Input type awaited: ' + input_type)
+    if input_type == 'mouse':
+        while time.time() <= timer:
+            #print('Run show before check? ' + str(run_show))
+            chk_input(pygame.event.get())
+            #print('Run show after check? ' + str(run_show))
+            if run == False or run_show == False:
+                print('Return to parent')
+                timer = time.time() + 1
+                return
+    if input_type == 'button':
+        while time.time() <= timer:
+            chk_input(pygame.event.get())
+            if GPIO.input(config.btnPin):
+                sleep(config.debounce)
+                btn_pressed = True
+                run_booth()
+            chk_input(pygame.event.get())
+        if btn_pressed:
+            wait_for_input(wait_time, input_type)
 
 ###################################################
 # Function to handle waiting for the button press #
@@ -338,8 +372,8 @@ def main():
         GPIO.output(config.greenLed, True)
         GPIO.output(config.whiteLed, True)
         # Check for input to exit, then wait for the button press.
-        chk_input(pygame.event.get())
-        wait_for_button(config.btn_wait)
+        #chk_input(pygame.event.get())
+        wait_for_input(config.btn_wait, 'button')
         # Check again for input to exit and begin the slide show.
         chk_input(pygame.event.get())
         run_slide_show()
