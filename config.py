@@ -36,3 +36,4 @@ slide_path = '/home/pi/gtataryn_pi_photobooth/slides/' # Path for instructional 
 prep_delay = 2 # Delay for people to pose in seconds
 shot_delay = 1 # Delay between photo captures in seconds
 btn_wait = 5
+make_gif = False

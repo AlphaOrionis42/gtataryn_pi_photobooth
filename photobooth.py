@@ -40,7 +40,7 @@ screen = pygame.display.get_surface()
 background = pygame.Surface((config.monitor_w, config.monitor_h))
 background.fill((0,0,0))
 pygame.mouse.set_visible(False)
-pygame.display.toggle_fullscreen()
+#pygame.display.toggle_fullscreen()
 
 ################################################
 # Function to clear the slides from the screen #
@@ -67,7 +67,8 @@ def chk_input(events):
         # If the input was a mouse button press, return true
         # used for ending the slide show when users tap the touch screen.
         elif event.type == MOUSEBUTTONDOWN:
-            #print("Mouse button")
+            if debug:
+                print("Mouse button")
             run_show = False
 
 ####################################################
@@ -100,24 +101,25 @@ def fade_img(img_path, offset_x, offset_y):
     global run_show
     alpha = 0
     img = pygame.image.load(img_path)
-    #clear_screen()
-    #print('begin fade image')
+    clear_screen()
+    if debug:
+        print('begin fade image')
     while not done:
-        #print('Alpha value: ' + str(alpha))
         chk_input(pygame.event.get())
         if not run_show:
             done = True
-            #print('end fade image')
+            if debug:
+                print('end fade image')
             return
 
-        #background.fill((0,0,0))
         img.set_alpha(alpha)
         screen.blit(img, (offset_x, offset_y))
         pygame.display.flip()
         alpha += config.alpha_vel
 
         if alpha >= 255:
-            #print('end fade image')
+            if debug:
+                print('end fade image')
             done = True
 
 
@@ -137,14 +139,16 @@ def make_gif(jpg_group, ts):
 # Function to resize photos #
 #############################
 def resize_imgs(jpg_group):
-    print("Resizing images")
+    if debug:
+        print("Resizing images")
     for x in range(1, config.num_shots+1):
         # Use Graphics Magick to resize the files for display on a screen. Uses the monitor resolution from confic.py
         graphicsmagick = "gm convert -size " + str(config.monitor_w) + "x" + \
             str(config.monitor_h) + " " + jpg_group + "_" + str(x) + \
             ".jpg -thumbnail " + str(config.monitor_w) + "x" + str(config.monitor_h) + \
             " " + jpg_group + "_" + str(x) + "_sm.jpg"
-        print(graphicsmagick)
+        if debug:
+            print(graphicsmagick)
         os.system(graphicsmagick)
 
 ###################################################
@@ -154,8 +158,10 @@ def img_replay(jpg_group):
     clear_screen()
     for i in range(0, config.replay_count):
         for j in range(1,config.num_shots+1):
-            print("Loop: " + str(i) + " Photo: " + str(j))
-            fade_img(jpg_group + "_" + str(j) + "_sm.jpg", 80, 0)
+            if debug:
+                print("Loop: " + str(i) + " Photo: " + str(j))
+                print("Image file: " + jpg_group + "_" + str(j) + "_sm.jpg")
+            show_img(jpg_group + "_" + str(j) + "_sm.jpg", 80, 0)
             sleep(config.replay_wait)
 
 ###################################################
@@ -164,6 +170,8 @@ def img_replay(jpg_group):
 def run_slide_show():
     file_list = os.listdir(config.save_path)
     num_files = len(file_list)
+    if debug:
+        print(str(num_files))
     slide_count = 0
     GPIO.output(config.whiteLed, False)
     global run_show
@@ -194,7 +202,6 @@ def run_slide_show():
                 if fnmatch.fnmatch(file_list[i], '*sm.jpg'):
                     fade_img(config.save_path + file_list[i], 80, 0)
                     wait_for_input(config.slide_wait, 'mouse')
-                    #print('Done waiting. Run_show = ' + str(run_show))
                     if not run_show:
                         break
                     slide_count += 1
@@ -207,6 +214,10 @@ def run_slide_show():
                         break
                     clear_screen()
                     slide_count = 0
+                    print(str(last_img))
+                    print(str(num_files))
+                    if last_img == (num_files - 1):
+                        last_img = 0
                 elif slide_count == 6:
                     fade_img(config.slide_path + 'start.png', 0, 0)
                     wait_for_input(config.slide_wait, 'mouse')
@@ -214,6 +225,8 @@ def run_slide_show():
                         break
                     clear_screen()
                     slide_count = 0
+                    if last_img == (num_files - 1):
+                        last_img = 0
         else:
             run_show = False
             break
@@ -233,11 +246,9 @@ def run_booth():
         print(now)
     # Try to run the preview and take a series of photots
     try:
-        #camera = picamera.PiCamera(sensor_mode=4, resolution='1640x1232')
         camera = picamera.PiCamera()
         camera.iso = config.camera_iso
         
-        #camera.preview_fullscreen = True
         clear_screen()
         for i in range(1,config.num_shots+1):
             chk_input(pygame.event.get())
@@ -291,11 +302,14 @@ def run_booth():
         camera.stop_preview()
         camera.close()
         
-    print("Wait for resize")
+    if debug:
+        print("Wait for resize")
     show_img(config.slide_path + "wait.png", 0, 0)
     resize_imgs(config.save_path + "photobooth_" + now)
-    #print("Wait for GIF")
-    #make_gif(config.save_path + "photobooth_" + now, now)
+    if debug:
+        print("Wait for GIF")
+    if config.make_gif:
+        make_gif(config.save_path + "photobooth_" + now, now)
     clear_screen()
     img_replay(config.save_path + "photobooth_" + now)
     GPIO.output(config.redLed, False)
@@ -324,14 +338,18 @@ def Startup():
 def wait_for_input(wait_time, input_type):
     timer = time.time() + wait_time
     btn_pressed = False
-    #print('Input type awaited: ' + input_type)
+    if debug:
+        print('Input type awaited: ' + input_type)
     if input_type == 'mouse':
         while time.time() <= timer:
-            #print('Run show before check? ' + str(run_show))
+            if debug:
+                print('Run show before check? ' + str(run_show))
             chk_input(pygame.event.get())
-            #print('Run show after check? ' + str(run_show))
+            if debug:
+                print('Run show after check? ' + str(run_show))
             if run == False or run_show == False:
-                #print('Return to parent')
+                if debug:
+                    print('Return to parent')
                 timer = time.time() + 1
                 return
     if input_type == 'button':
@@ -355,7 +373,8 @@ def main():
     time.sleep(0.5)
     show_img(config.slide_path + 'intro.png', 0, 0)
     while run:
-        print('Top of main run')
+        if debug:
+            print('Top of main run')
         # Turn off the red LED and turn on the green LED.
         GPIO.output(config.redLed, False)
         GPIO.output(config.greenLed, True)
@@ -366,7 +385,8 @@ def main():
         # Check again for input to exit and begin the slide show.
         chk_input(pygame.event.get())
         run_slide_show()
-        print('Bottom of main run')
+        if debug:
+            print('Bottom of main run')
 
 ####################
 # Try Running Main #
