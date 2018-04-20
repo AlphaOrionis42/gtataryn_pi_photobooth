@@ -1,6 +1,7 @@
 # Config file for PhotoBooth app
 # Author: Greg Tataryn
-
+import sys
+import os
 # Resolution Settings
 monitor_h = 480
 monitor_w = 800
@@ -28,9 +29,10 @@ replay_wait = 2 # Delay to show each photo in seconds
 alpha_vel = 5 # The speed at which the alpha changes to fade in images
 
 # File path variables
-save_path = '/media/pi/P/pics/' # Path to save the photos
-gif_path = '/media/pi/P/gifs/' # Path for gifs
-slide_path = '/home/pi/gtataryn_pi_photobooth/slides/' # Path for instructional and counddown slides
+media_path = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser('~/Photos')
+save_path = media_path+'/pics/' if os.path.isdir(media_path+'/pics/') else os.makedirs(media_path+'/pics/') # Path to save the photos
+gif_path = media_path+'/gifs/' if os.path.isdir(media_path+'/gifs/') else os.makedirs(media_path+'/gifs/') # Path for gifs
+slide_path = os.path.dirname(os.path.realpath(__file__)) + '/slides/' # Path for instructional and counddown slides
 
 # Time delay options
 prep_delay = 2 # Delay for people to pose in seconds

@@ -12,7 +12,6 @@ from pygame.locals import *
 import time
 from time import sleep
 from PIL import Image
-
 # Local variables
 debug = False # Debug toggle
 run = True #Run variable for main program
