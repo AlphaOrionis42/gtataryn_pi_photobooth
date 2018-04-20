@@ -29,7 +29,7 @@ replay_wait = 2 # Delay to show each photo in seconds
 alpha_vel = 5 # The speed at which the alpha changes to fade in images
 
 # File path variables
-media_path = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser('~/Photos')
+media_path = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser('~/Pictures')
 save_path = media_path+'/pics/' if os.path.isdir(media_path+'/pics/') else os.makedirs(media_path+'/pics/') # Path to save the photos
 gif_path = media_path+'/gifs/' if os.path.isdir(media_path+'/gifs/') else os.makedirs(media_path+'/gifs/') # Path for gifs
 slide_path = os.path.dirname(os.path.realpath(__file__)) + '/slides/' # Path for instructional and counddown slides
