@@ -14,7 +14,7 @@ import time
 from time import sleep
 from PIL import Image
 # Local variables
-debug = True # Debug toggle
+debug = False # Debug toggle
 run = True #Run variable for main program
 run_show = True # Run variable for the slide show
 last_img = 0 # Used inside the slide show to track the last photo shown
@@ -40,7 +40,7 @@ screen = pygame.display.get_surface()
 background = pygame.Surface((config.monitor_w, config.monitor_h))
 background.fill((0,0,0))
 pygame.mouse.set_visible(False)
-#pygame.display.toggle_fullscreen()
+pygame.display.toggle_fullscreen()
 
 ################################################
 # Function to clear the slides from the screen #
