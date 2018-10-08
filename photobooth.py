@@ -14,7 +14,7 @@ import time
 from time import sleep
 from PIL import Image
 # Local variables
-debug = False # Debug toggle
+debug = True # Debug toggle
 run = True #Run variable for main program
 run_show = True # Run variable for the slide show
 last_img = 0 # Used inside the slide show to track the last photo shown
@@ -40,7 +40,7 @@ screen = pygame.display.get_surface()
 background = pygame.Surface((config.monitor_w, config.monitor_h))
 background.fill((0,0,0))
 pygame.mouse.set_visible(False)
-pygame.display.toggle_fullscreen()
+#pygame.display.toggle_fullscreen()
 
 ################################################
 # Function to clear the slides from the screen #
@@ -195,13 +195,13 @@ def run_slide_show():
     file_list = os.listdir(config.playback_path)
     num_files = len(file_list)
     if debug:
-        print(str(num_files))
+        print("Number of files: " + str(num_files))
     slide_count = 0
     GPIO.output(config.whiteLed, False)
     global run_show
     global last_img
     if debug:
-        print(str(last_img))
+        print("Last image number: " + str(last_img))
     run_show = True
     while run_show:
         chk_input(pygame.event.get())
@@ -229,21 +229,19 @@ def run_slide_show():
                 wait_for_input(config.slide_wait, 'mouse')
                 if not run_show:
                    break
-                slide_count = i
+                slide_count += 1
                 last_img = i
 
-                if num_files < 6 and slide_count == num_files:
+                if last_img == (num_files - 1):
+                    if debug:
+                        print("More than 6 files and at the end")
                     fade_img(config.slide_path + 'start.png', 0, 0)
                     wait_for_input(config.slide_wait, 'mouse')
                     if not run_show:
                         break
                     clear_screen()
                     slide_count = 0
-                    if debug:
-                        print(str(last_img))
-                        print(str(num_files))
-                    if last_img == (num_files - 1):
-                        last_img = 0
+                    last_img = 0
                 elif slide_count == 6:
                     fade_img(config.slide_path + 'start.png', 0, 0)
                     wait_for_input(config.slide_wait, 'mouse')
