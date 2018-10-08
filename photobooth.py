@@ -3,6 +3,7 @@
 
 import os
 import config
+import shutil
 import fnmatch
 import RPi.GPIO as GPIO
 import picamera
@@ -39,7 +40,7 @@ screen = pygame.display.get_surface()
 background = pygame.Surface((config.monitor_w, config.monitor_h))
 background.fill((0,0,0))
 pygame.mouse.set_visible(False)
-#pygame.display.toggle_fullscreen()
+pygame.display.toggle_fullscreen()
 
 ################################################
 # Function to clear the slides from the screen #
@@ -150,6 +151,30 @@ def resize_imgs(jpg_group):
             print(graphicsmagick)
         os.system(graphicsmagick)
 
+#######################################################
+# Function to move images from temp folder to storage #
+#######################################################
+def copy_imgs(img_grp):
+    if debug:
+        print("Copying images")
+
+    
+    for x in range(1, config.num_shots+1):
+        sm_src = config.capture_path + img_grp + "_" + str(x) + "_sm.jpg"
+        orig_src = config.capture_path + img_grp + "_" + str(x) + ".jpg"
+        for i in range(len(config.img_paths)):
+            sm_dest = config.small_paths[i] + img_grp + "_" + str(x) + "_sm.jpg"
+            orig_dest = config.img_paths[i] + img_grp + "_" + str(x) + ".jpg"
+            if debug:
+                print("Original source: " + orig_src)
+                print("Original destination: " + orig_dest)
+                print("Small source: " + sm_src)
+                print("Small destination: " + sm_dest)
+            shutil.copyfile(sm_src, sm_dest)
+            shutil.copyfile(orig_src, orig_dest)
+        os.remove(sm_src)
+        os.remove(orig_src)
+
 ###################################################
 # Function to display the preview images to users #
 ###################################################
@@ -167,7 +192,7 @@ def img_replay(jpg_group):
 # Function to run slide show of  all photos taken #
 ###################################################
 def run_slide_show():
-    file_list = os.listdir(config.save_path)
+    file_list = os.listdir(config.playback_path)
     num_files = len(file_list)
     if debug:
         print(str(num_files))
@@ -195,16 +220,17 @@ def run_slide_show():
                 if debug:
                     print("i = " + str(i))
                     print("last_img = " + str(last_img))
+                    print("slide_count = " + str(slide_count))
+                    print("num_files = " + str(num_files))
                 chk_input(pygame.event.get())
                 if not run_show:
                     break
-                if fnmatch.fnmatch(file_list[i], '*sm.jpg'):
-                    fade_img(config.save_path + file_list[i], 80, 0)
-                    wait_for_input(config.slide_wait, 'mouse')
-                    if not run_show:
-                        break
-                    slide_count += 1
-                    last_img = i
+                fade_img(config.playback_path + file_list[i], 80, 0)
+                wait_for_input(config.slide_wait, 'mouse')
+                if not run_show:
+                   break
+                slide_count = i
+                last_img = i
 
                 if num_files < 6 and slide_count == num_files:
                     fade_img(config.slide_path + 'start.png', 0, 0)
@@ -213,8 +239,9 @@ def run_slide_show():
                         break
                     clear_screen()
                     slide_count = 0
-                    print(str(last_img))
-                    print(str(num_files))
+                    if debug:
+                        print(str(last_img))
+                        print(str(num_files))
                     if last_img == (num_files - 1):
                         last_img = 0
                 elif slide_count == 6:
@@ -256,7 +283,7 @@ def run_booth():
             camera.hflip = True
             camera.resolution = (config.monitor_w, config.monitor_h)
             camera.start_preview()
-            filename = config.save_path + 'photobooth_' + now + '_' + str(i) + '.jpg'
+            filename = 'photobooth_' + now + '_' + str(i) + '.jpg'
             sleep(.5)
             o = overlay_img(config.slide_path + 'pose.png', camera)
             GPIO.output(config.greenLed, True)
@@ -286,7 +313,7 @@ def run_booth():
             camera.stop_preview()
             camera.resolution = (config.photo_w, config.photo_h)
             GPIO.output(config.redLed, True)
-            camera.capture(filename)
+            camera.capture(config.capture_path + filename)
             if debug:
                 print(filename)
             sleep(config.shot_delay)
@@ -304,13 +331,14 @@ def run_booth():
     if debug:
         print("Wait for resize")
     show_img(config.slide_path + "wait.png", 0, 0)
-    resize_imgs(config.save_path + "photobooth_" + now)
+    resize_imgs(config.capture_path + "photobooth_" + now)
+    copy_imgs("photobooth_" + now)
     if debug:
         print("Wait for GIF")
     if config.make_gif:
         make_gif(config.save_path + "photobooth_" + now, now)
     clear_screen()
-    img_replay(config.save_path + "photobooth_" + now)
+    img_replay(config.playback_path + "photobooth_" + now)
     GPIO.output(config.redLed, False)
     GPIO.output(config.greenLed, True)
     GPIO.output(config.whiteLed, True)
@@ -341,11 +369,11 @@ def wait_for_input(wait_time, input_type):
         print('Input type awaited: ' + input_type)
     if input_type == 'mouse':
         while time.time() <= timer:
-            if debug:
-                print('Run show before check? ' + str(run_show))
+            #if debug:
+                #print('Run show before check? ' + str(run_show))
             chk_input(pygame.event.get())
-            if debug:
-                print('Run show after check? ' + str(run_show))
+            #if debug:
+                #print('Run show after check? ' + str(run_show))
             if run == False or run_show == False:
                 if debug:
                     print('Return to parent')

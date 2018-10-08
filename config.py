@@ -30,8 +30,34 @@ alpha_vel = 5 # The speed at which the alpha changes to fade in images
 
 # File path variables
 #media_path = sys.argv[1] if len(sys.argv) > 1 else os.path.expanduser('~/Pictures')
-save_path = '/media/pi/A/pics/' # Path to save the photos
-gif_path = '/media/pi/A/gifs/' # Path for gifs
+media_paths = []
+img_paths = []
+small_paths = []
+gif_paths = []
+
+if len(os.listdir('/media/pi')) > 0:
+    for x in os.listdir('/media/pi'):
+        media_paths.append('/media/pi/' + x)
+else:
+    media_paths.append(os.path.expanduser('~/Pictures/'))
+
+for y in media_paths:
+    if not os.path.exists(y + '/pics'):
+        os.mkdir(y + '/pics/')
+        if not os.path.exists(y + '/pics/FullSize'):
+            os.mkdir(y + '/pics/FullSize/')
+        if not os.path.exists(y + '/pics/Playback'):
+            os.mkdir(y + '/pics/Playback/')
+        
+    if not os.path.exists(y + '/gifs'):
+        os.mkdir(y + '/gifs/')
+        
+    img_paths.append(y + '/pics/FullSize/')
+    small_paths.append(y + '/pics/Playback/')
+    gif_paths.append(y + '/gifs/')
+
+playback_path = small_paths[0]
+capture_path = os.path.dirname(os.path.realpath(__file__)) + '/tmp/' # temp path to take pictures
 slide_path = os.path.dirname(os.path.realpath(__file__)) + '/slides/' # Path for instructional and counddown slides
 
 # Time delay options
