@@ -1,0 +1,2 @@
+UUID=5BBE-2874 /media/pi/PhotoB exfat defaults,uid=pi,gid=pi,nofail 0 2
+UUID=5BBE-285E /media/pi/PhotoA exfat defaults,uid=pi,gid=pi,nofail 0 2
