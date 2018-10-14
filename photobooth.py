@@ -18,6 +18,10 @@ debug = False # Debug toggle
 run = True #Run variable for main program
 run_show = True # Run variable for the slide show
 last_img = 0 # Used inside the slide show to track the last photo shown
+transform_x = config.monitor_w
+transform_y = config.monitor_h
+offset_x = 0
+offset_y = 0
 
 #######################
 # GPIO Initialization #
@@ -71,6 +75,28 @@ def chk_input(events):
                 print("Mouse button")
             run_show = False
 
+#################################
+# Function to set imgage offset #
+#################################
+def set_demensions(img_w, img_h):
+    global transform_y, transform_x, offset_y, offset_x
+
+    ratio_h = (config.monitor_w * img_h) / img_w
+    if (ratio_h < config.monitor_h):
+        transform_y = ratio_h
+        transform_x = config.monitor_w
+        offset_y = (config.monitor_h - ratio_h) / 2
+        offset_x = 0
+    elif (ratio_h > config.monitor_h):
+        transform_x = (config.monitor_h * img_w) / img_h
+        transform_y = config.monitor_h
+        offset_x = (config.monitor_w - transform_x) / 2
+        offset_y = 0
+    else:
+        transform_x = config.monitor_w
+        transform_y = config.monitor_h
+        offset_x = offset_y = 0
+
 ####################################################
 # Function to overlay images to the camera preview #
 ####################################################
@@ -84,11 +110,13 @@ def overlay_img(imgPath, cam):
 #############################################
 # Function to display an image using pygame #
 #############################################
-def show_img(img_path, offset_x, offset_y):
+def show_img(img_path):
     clear_screen()
 
     img = pygame.image.load(img_path)
     img = img.convert()
+
+    set_demensions(img.get_width(), img.get_height())
 
     screen.blit(img, (offset_x, offset_y))
     pygame.display.flip()
@@ -96,11 +124,12 @@ def show_img(img_path, offset_x, offset_y):
 #############################################
 # Function to fade in an image using pygame #
 #############################################
-def fade_img(img_path, offset_x, offset_y):
+def fade_img(img_path):
     done = False
     global run_show
     alpha = 0
     img = pygame.image.load(img_path)
+    set_demensions(img.get_width(), img.get_height())
     clear_screen()
     if debug:
         print('begin fade image')
@@ -185,14 +214,14 @@ def img_replay(jpg_group):
             if debug:
                 print("Loop: " + str(i) + " Photo: " + str(j))
                 print("Image file: " + jpg_group + "_" + str(j) + "_sm.jpg")
-            show_img(jpg_group + "_" + str(j) + "_sm.jpg", 80, 0)
+            show_img(jpg_group + "_" + str(j) + "_sm.jpg")
             sleep(config.replay_wait)
 
 ###################################################
 # Function to run slide show of  all photos taken #
 ###################################################
 def run_slide_show():
-    file_list = os.listdir(config.playback_path)
+    file_list = sorted(os.listdir(config.playback_path))
     num_files = len(file_list)
     if debug:
         print("Number of files: " + str(num_files))
@@ -225,7 +254,7 @@ def run_slide_show():
                 chk_input(pygame.event.get())
                 if not run_show:
                     break
-                fade_img(config.playback_path + file_list[i], 80, 0)
+                fade_img(config.playback_path + file_list[i])
                 wait_for_input(config.slide_wait, 'mouse')
                 if not run_show:
                    break
@@ -235,7 +264,7 @@ def run_slide_show():
                 if last_img == (num_files - 1):
                     if debug:
                         print("More than 6 files and at the end")
-                    fade_img(config.slide_path + 'start.png', 0, 0)
+                    fade_img(config.slide_path + 'start.png')
                     wait_for_input(config.slide_wait, 'mouse')
                     if not run_show:
                         break
@@ -243,7 +272,7 @@ def run_slide_show():
                     slide_count = 0
                     last_img = 0
                 elif slide_count == 6:
-                    fade_img(config.slide_path + 'start.png', 0, 0)
+                    fade_img(config.slide_path + 'start.png')
                     wait_for_input(config.slide_wait, 'mouse')
                     if not run_show:
                         break
@@ -255,7 +284,7 @@ def run_slide_show():
             run_show = False
             break
     GPIO.output(config.whiteLed, True)
-    show_img(config.slide_path + 'intro.png', 0, 0)
+    show_img(config.slide_path + 'intro.png')
                     
 
 #############################
@@ -328,7 +357,7 @@ def run_booth():
         
     if debug:
         print("Wait for resize")
-    show_img(config.slide_path + "wait.png", 0, 0)
+    show_img(config.slide_path + "wait.png")
     resize_imgs(config.capture_path + "photobooth_" + now)
     copy_imgs("photobooth_" + now)
     if debug:
@@ -341,7 +370,7 @@ def run_booth():
     GPIO.output(config.greenLed, True)
     GPIO.output(config.whiteLed, True)
     clear_screen()    
-    show_img(config.slide_path + 'intro.png', 0, 0)
+    show_img(config.slide_path + 'intro.png')
 
 ##################################################
 # Function that runs on startup to blink the LED #
@@ -396,7 +425,7 @@ def main():
     # Run startup to blink the green light.
     Startup()
     time.sleep(0.5)
-    show_img(config.slide_path + 'intro.png', 0, 0)
+    show_img(config.slide_path + 'intro.png')
     while run:
         if debug:
             print('Top of main run')
