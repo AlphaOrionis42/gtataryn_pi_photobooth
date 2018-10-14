@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=photobooth.py
+Comment=Start my script
+NoDisplay=false
+Exec=sudo python /home/pi/gtataryn_pi_photobooth/photobooth.py
+NotShowIn=GNOME;KDE;XFCE;
+Name[en_US]= photobooth.py
